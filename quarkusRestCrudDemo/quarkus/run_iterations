@@ -1,0 +1,28 @@
+#!/bin/bash
+
+iterations=5
+
+if [ $# -gt "0" ];
+then
+	CASE=$1
+fi
+
+if [ -z "${CASE}" ];
+then
+	echo "usage: $0 <case> [<iterations>]"
+	exit 1
+fi
+
+if [ $# -gt "1" ];
+then
+	iterations=$2
+fi
+
+echo "Total iterations: ${iterations}"
+for i in `seq 1 $iterations`;
+do
+	echo "---------------------"
+	echo "Starting iteration $i"
+	./run_jmeter_load.sh ${CASE}.${i}
+	sleep 5s
+done

@@ -1,0 +1,27 @@
+FROM adoptopenjdk:8-jdk-openj9
+#FROM openj9-alpine-stripped
+WORKDIR /work
+#RUN apt update && \
+#    apt install -y libcapstone-dev pkg-config cmake git
+#RUN git clone https://github.com/pmem/syscall_intercept.git && cd syscall_intercept && \
+#    mkdir build && cd build && cmake .. && make -j 4 && make install && ldconfig
+RUN chmod 777 /work
+COPY target/lib /work/lib
+# COPY target/rest-http-crud-quarkus-runner.jar /work/application.jar
+COPY target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar /work/application.jar
+COPY run_app_hs.sh /work/run_app.sh
+COPY wrk /opt/wrk
+COPY createCache.sh /opt/createCache.sh
+#COPY liballoctracker.so /work/liballoctracker.so
+#COPY libmmaptracker.so /work/libmmaptracker.so
+COPY jdk8u252-b09-hs /opt/myjava
+ENV JAVA_HOME /opt/myjava
+EXPOSE 8080
+# RUN cd /opt && mkdir /opt/.classCache && /bin/sh -c "./createCache.sh &" && sleep 150s # && pkill -9 -x java
+# ENV JAVA_OPTS "$JAVA_OPTS -jar Djava.net.preferIPv4Stack=true -Xmx128m"
+# ENTRYPOINT java ${JAVA_OPTS} -cp /work/application -jar /work/application.jar
+ENV HTTP_PORT 8080
+ENV DB_PORT 5432
+ENTRYPOINT ["./run_app.sh"]
+# ENTRYPOINT java -Djava.net.preferIPv4Stack=true -cp /work/application -jar /work/application.jar
+# ENTRYPOINT ["java", "-Dquarkus.http.port=${HTTP_PORT}", "-Xshareclasses:name=quarkus,cacheDir=/opt/.classCache,cacheDirPerm=1000,readonly", "-XX:ShareClassesEnableBCI", "-Xscmx80m", "-Xmx128m", "-Djava.net.preferIPv4Stack=true", "-cp", "/work/application", "-jar", "/work/application.jar"]

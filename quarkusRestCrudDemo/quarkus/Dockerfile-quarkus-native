@@ -1,0 +1,18 @@
+FROM ubuntu:18.04
+WORKDIR /work
+#RUN apt update && \
+#    apt install -y libcapstone-dev pkg-config cmake git
+#RUN git clone https://github.com/pmem/syscall_intercept.git && cd syscall_intercept && \
+#    mkdir build && cd build && cmake .. && make -j 4 && make install && ldconfig
+#COPY target/rest-http-crud-quarkus-runner /work/rest-http-crud-quarkus-runner
+COPY run_app_native.sh /work/run_app_native.sh
+#COPY libmmaptracker.so /work/libmmaptracker.so
+#COPY liballoctracker.so /work/liballoctracker.so
+COPY target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner /work/application
+RUN chmod 777 /work
+EXPOSE 8080
+ENV HTTP_PORT 8080
+ENV DB_PORT 5432
+ENV HEAP_SETTINGS "-Xms100m -Xmn110m -Xmx128m"
+#ENTRYPOINT ["./application", "-Dhttp.host=0.0.0.0" ]
+ENTRYPOINT ["./run_app_native.sh"]
