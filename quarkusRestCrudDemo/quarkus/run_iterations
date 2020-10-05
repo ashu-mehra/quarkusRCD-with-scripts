@@ -1,6 +1,6 @@
 #!/bin/bash
 
-iterations=5
+iterations=10
 
 if [ $# -gt "0" ];
 then
@@ -23,6 +23,6 @@ for i in `seq 1 $iterations`;
 do
 	echo "---------------------"
 	echo "Starting iteration $i"
-	./run_jmeter_load.sh ${CASE}.${i}
+	./run_wrapper.sh ${CASE}.${i}
 	sleep 5s
 done
