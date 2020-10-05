@@ -6,7 +6,7 @@ function setDefaultConfig() {
 	if [ -z "${JRE_HOME}" ]; then export JRE_HOME="${PWD}/jre"; fi
 	if [ -z "${QUARKUS_REST_CRUD_APP}" ]; then export QUARKUS_REST_CRUD_APP="${PWD}"; fi
 	if [ -z "${JARMIN_HOME}" ]; then export JARMIN_HOME="${PWD}/jarmin/"; fi
-	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then export JAVA_HOME_FOR_QUARKUS="/home/asmehra/data/IBM/ashu-mehra/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image"; fi
+	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then export JAVA_HOME_FOR_QUARKUS="${PWD}/jdk-with-jarmin/j2re-image"; fi
 	if [ -z "${JARMIN_PHASE}" ]; then export JARMIN_PHASE="phase2"; fi # valid values: phase1 or phase2
 	if [ -z "${DO_PERF_PROFILING}" ]; then export DO_PERF_PROFILING=0; fi
 	if [ -z "${NUM_REQUESTS}" ]; then export NUM_REQUESTS=1; fi
@@ -124,7 +124,9 @@ if [ ! -z "${TR_RegisterForSigUsr}" ] && [ "${JARMIN_PHASE}" = "phase1" ];
 then
 	echo "Starting Jarmin in phase 1"
 	kill -10 ${java_pid}
-	while true;
+	counter=0
+	max_iterations=120
+	while [ "${counter}" -lt "${max_iterations}" ];
 	do
 		grep "Compilation Done" ${RESULTS_DIR}/quarkus.log &> /dev/null
 		if [ $? -eq "0" ];
@@ -132,7 +134,14 @@ then
 			break;
 		fi
 		sleep 5s
+		counter=$(( $counter+1 ))
 	done
+	grep "Compilation Done" ${RESULTS_DIR}/quarkus.log &> /dev/null
+	if [ $? -ne "0" ];
+	then
+		echo "JVM is taking too long to compile methods...Exiting"
+		break;
+	fi
 	cp ${JIT_LOG} ${RESULTS_DIR}/jit.log.afterjarmincomp
 fi
 
@@ -225,6 +234,7 @@ then
 	mv /tmp/rootmethods.log ${RESULTS_DIR}
 	mv /tmp/jarmin_methods.log ${RESULTS_DIR}
 	mv /tmp/javamethods.log ${RESULTS_DIR}
+	mv /tmp/classesNotFound.log ${RESULTS_DIR}
 fi
 
 kill -3 ${java_pid}
