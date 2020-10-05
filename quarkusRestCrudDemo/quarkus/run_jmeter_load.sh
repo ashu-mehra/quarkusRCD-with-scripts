@@ -6,7 +6,8 @@ function setDefaultConfig() {
 	if [ -z "${JRE_HOME}" ]; then export JRE_HOME="${PWD}/jre"; fi
 	if [ -z "${QUARKUS_REST_CRUD_APP}" ]; then export QUARKUS_REST_CRUD_APP="${PWD}"; fi
 	if [ -z "${JARMIN_HOME}" ]; then export JARMIN_HOME="${PWD}/jarmin/"; fi
-	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then export JAVA_HOME_FOR_QUARKUS="/home/asmehra/data/IBM/ashu-mehra/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image"; fi
+	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then export JAVA_HOME_FOR_QUARKUS="${PWD}/jdk-with-jarmin/j2re-image"; fi
+	if [ -z "${JMETER_HOME}" ]; then export JMETER_HOME="${PWD}/jmeter"; fi
 	if [ -z "${JARMIN_PHASE}" ]; then export JARMIN_PHASE="phase2"; fi # valid values: phase1 or phase2
 	if [ -z "${DO_PERF_PROFILING}" ]; then export DO_PERF_PROFILING=0; fi
 	if [ -z "${NUM_REQUESTS}" ]; then export NUM_REQUESTS=1; fi
@@ -15,16 +16,23 @@ function setDefaultConfig() {
 	echo "JRE_HOME: ${JRE_HOME}"
 	echo "QUARKUS_REST_CRUD_APP: ${QUARKUS_REST_CRUD_APP}"
 	echo "JARMIN_HOME: ${JARMIN_HOME}"
-	echo "JAVA_HOME_FOR_QUARKUS:${JAVA_HOME_FOR_QUARKUS}"
+	echo "JAVA_HOME_FOR_QUARKUS: ${JAVA_HOME_FOR_QUARKUS}"
+	echo "JMETER_HOME: ${JMETER_HOME}"
 	echo "RESULTS_DIR: ${RESULTS_DIR}"
 	echo "-------------------"
 }
 
 function checkConfig() {
 	if [ -z "${JRE_HOME}" ]; then echo "Error: JRE_HOME not set!"; exit -1; fi
+	if [ ! -d "${JRE_HOME}" ]; then echo "Error: JRE_HOME ${JRE_HOME} not found"; exit -1; fi
 	if [ -z "${QUARKUS_REST_CRUD_APP}" ]; then echo "Error: QUARKUS_REST_CRUD_APP not set!"; exit -1; fi
+	if [ ! -d "${QUARKUS_REST_CRUD_APP}" ]; then echo "Error: QUARKUS_REST_CRUD_APP ${QUARKUS_REST_CRUD_APP} not found"; exit -1; fi
 	if [ -z "${JARMIN_HOME}" ]; then echo "Error: JARMIN_HOME not set!"; exit -1; fi
+	if [ ! -d "${JARMIN_HOME}" ]; then echo "Error: JARMIN_HOME ${JARMIN_HOME} not found"; exit -1; fi
 	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then echo "Error: JAVA_HOME_FOR_QUARKUS not set!"; exit -1; fi
+	if [ ! -d "${JAVA_HOME_FOR_QUARKUS}" ]; then echo "Error: JAVA_HOME_FOR_QUARKUS ${JAVA_HOME_FOR_QUARKUS} not found"; exit -1; fi
+	if [ -z "${JMETER_HOME}" ]; then echo "Error: JMETER_HOME not set!"; exit -1; fi
+	if [ ! -d "${JMETER_HOME}" ]; then echo "Error: JMETER_HOME ${JMETER_HOME} not found"; exit -1; fi
 }
 
 function setJVMLogs() {
@@ -74,9 +82,11 @@ fi
 
 if [ "${DO_PERF_PROFILING}" -eq "1" ];
 then
-	taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Dquarkus.thread-pool.max-threads=1 -agentpath:/root/ashu/linux/tools/perf/libperf-jvmti.so -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "-Xjit:verbose={compilePerformance,compileExclude,counts,inlining},vlog=${JIT_LOG},iprofilerVerbose,disableSuffixLogs${JIT_COUNT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
+	# numactl --physcpubind="0-3" --membind="0" stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Dquarkus.thread-pool.max-threads=1 -agentpath:/root/ashu/linux/tools/perf/libperf-jvmti.so -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "-Xjit:verbose={compilePerformance,compileExclude,counts,inlining},vlog=${JIT_LOG},iprofilerVerbose,disableSuffixLogs${JIT_COUNT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
+	taskset -c 0-3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Dquarkus.thread-pool.max-threads=1 -agentpath:/root/ashu/linux/tools/perf/libperf-jvmti.so -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "-Xjit:verbose={compilePerformance,compileExclude,counts,inlining},vlog=${JIT_LOG},iprofilerVerbose,disableSuffixLogs${JIT_COUNT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
 else
-	taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
+	# numactl --physcpubind="0-3" --membind="0" stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
+	taskset -c 0-3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
 fi
 
 if [ $? -ne "0" ];
@@ -86,6 +96,9 @@ then
 fi
 
 sleep 5s
+
+java_pid=`ps -ef | grep rest-http-crud-quarkus | grep -v "perf record" | grep -v grep | awk '{ print $2 }'`
+echo "java pid: ${java_pid}"
 
 counter=0
 max_iterations=300
@@ -104,11 +117,9 @@ grep "rest-http-crud-quarkus.*started in" ${RESULTS_DIR}/quarkus.log &> /dev/nul
 if [ $? -ne "0" ];
 then
 	echo "JVM is taking too long to startup...Exiting"
+	kill -9 ${java_pid}
 	exit 1
 fi
-
-java_pid=`ps -ef | grep rest-http-crud-quarkus | grep -v "perf record" | grep -v grep | awk '{ print $2 }'`
-echo "java pid: ${java_pid}"
 
 # Phase 1
 
@@ -124,7 +135,9 @@ if [ ! -z "${TR_RegisterForSigUsr}" ] && [ "${JARMIN_PHASE}" = "phase1" ];
 then
 	echo "Starting Jarmin in phase 1"
 	kill -10 ${java_pid}
-	while true;
+	counter=0
+	max_iterations=120
+	while [ "${counter}" -lt "${max_iterations}" ];
 	do
 		grep "Compilation Done" ${RESULTS_DIR}/quarkus.log &> /dev/null
 		if [ $? -eq "0" ];
@@ -132,7 +145,15 @@ then
 			break;
 		fi
 		sleep 5s
+		counter=$(( $counter+1 ))
 	done
+	grep "Compilation Done" ${RESULTS_DIR}/quarkus.log &> /dev/null
+	if [ $? -ne "0" ];
+	then
+		echo "JVM is taking too long to compile methods...Exiting"
+		kill -9 ${java_pid}
+		exit 1
+	fi
 	cp ${JIT_LOG} ${RESULTS_DIR}/jit.log.afterjarmincomp
 fi
 
@@ -148,6 +169,7 @@ for i in `seq 1 ${NUM_REQUESTS}`; do
 	then
 		echo "First request failed, exit code: $?"
 		echo "Exiting"
+		kill -9 ${java_pid}
 		exit
 	fi
 	echo "Response for request: ${response}"
@@ -155,6 +177,7 @@ for i in `seq 1 ${NUM_REQUESTS}`; do
 	if [ $? -ne "0" ];
 	then
 		echo "Did not get expected response. Exiting."
+		kill -9 ${java_pid}
 		exit
 	fi
 done
@@ -199,7 +222,8 @@ echo "Phase 2 done"
 
 # Phase 3
 
-taskset -c 1 ./run_top.sh "${java_pid}" &> ${TOP_OUTPUT} &
+# numactl --physcpubind="11-15" --membind="1" ./run_top.sh "${java_pid}" &> ${TOP_OUTPUT} &
+taskset -c 11-15 ./run_top.sh "${java_pid}" &> ${TOP_OUTPUT} &
 sleep 1s
 top_pid=`ps -ef | grep "top -b" | grep -v grep | awk '{ print $2 }'`
 echo "top_pid: ${top_pid}"
@@ -211,20 +235,23 @@ then
 	tid_hex=`grep -A 3 "executor-thread-1" ${RESULTS_DIR}/javacore.phase2 | grep "native thread ID" | cut -d ':' -f 2 | cut -d ',' -f 1 | cut -d 'x' -f 2`
 	tid=`echo "obase=10; ibase=16; ${tid_hex}" | bc`
 	echo "Profiling thread ${tid}"
-	numactl --physcpubind="0-3" --membind="0" /root/ashu/linux/tools/perf/perf record --tid=${tid} -o ${RESULTS_DIR}/perf.data -k 1 -i -p ${java_pid} -e cycles &
+	# numactl --physcpubind="0-3" --membind="0" /root/ashu/linux/tools/perf/perf record --tid=${tid} -o ${RESULTS_DIR}/perf.data -k 1 -i -p ${java_pid} -e cycles &
+	taskset -c 0-3 /root/ashu/linux/tools/perf/perf record --tid=${tid} -o ${RESULTS_DIR}/perf.data -k 1 -i -p ${java_pid} -e cycles &
 	sleep 1s
 	perf_pid=`ps -ef | grep "perf record" | grep -v grep | awk '{ print $2 }'`
 	echo "perf pid: ${perf_pid}"
 fi
 # COMMENT
 
-taskset -c 0,1,4,5 /home/asmehra/data/apache-jmeter-5.2.1/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+# numactl --physcpubind="11-15" --membind="1" ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+taskset -c 11-15 ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
 
 if [ ! -z "${TR_RegisterForSigUsr}" ] && [ -z "${TR_DoNotRunJarmin}" ];
 then
 	mv /tmp/rootmethods.log ${RESULTS_DIR}
 	mv /tmp/jarmin_methods.log ${RESULTS_DIR}
 	mv /tmp/javamethods.log ${RESULTS_DIR}
+	mv /tmp/classesNotFound.log ${RESULTS_DIR}
 fi
 
 kill -3 ${java_pid}
