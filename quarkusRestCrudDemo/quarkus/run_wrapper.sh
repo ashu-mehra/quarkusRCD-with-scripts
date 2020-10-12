@@ -40,8 +40,8 @@ stop_db() {
 
 checkJre
 checkJreWithJarmin
-stop_db # this is to stop any previous db instances
-start_db
+#stop_db # this is to stop any previous db instances
+#start_db
 
 sleep 2s
 
@@ -53,6 +53,8 @@ fi
 if [ -z "${RESULTS_DIR}" ]; then RESULTS_DIR="results"; fi
 mkdir -p ${RESULTS_DIR} &> /dev/null
 
+# export DO_PERF_PROFILING=1
+
 ### JVM options ###
 
 #TR_FlushProfilingBuffers=1
@@ -61,9 +63,11 @@ mkdir -p ${RESULTS_DIR} &> /dev/null
 #export TR_DebugDLT=1
 
 export JIT_LOG="${RESULTS_DIR}/jit.log"
+
 JIT_VERBOSE_SETTING="verbose={compilePerformance,compileExclude,counts,inlining},vlog=${JIT_LOG},iprofilerVerbose,disableSuffixLogs"
+
 JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation"
-#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dltOptLevel=hot"
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dltOptLevel=hot,scratchSpaceLimit=524288"
 #JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,exclude={*Lambda*.*}"
 
 #export JIT_SETTINGS="-Xjit:exclude={*Lambda*.*},${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
@@ -90,5 +94,5 @@ fi
 
 ./run_jmeter_load.sh "${RESULTS_DIR}"
 
-stop_db
+#stop_db
 

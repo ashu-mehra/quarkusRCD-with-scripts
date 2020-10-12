@@ -74,7 +74,7 @@ fi
 
 if [ "${DO_PERF_PROFILING}" -eq "1" ];
 then
-	taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Dquarkus.thread-pool.max-threads=1 -agentpath:/root/ashu/linux/tools/perf/libperf-jvmti.so -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "-Xjit:verbose={compilePerformance,compileExclude,counts,inlining},vlog=${JIT_LOG},iprofilerVerbose,disableSuffixLogs${JIT_COUNT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
+	taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -agentpath:/home/asmehra/data/IBM/linux/tools/perf/libperf-jvmti.so -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
 else
 	taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
 fi
@@ -194,6 +194,9 @@ then
 			fi
 			sleep 5s
 		done
+		kill -3 ${java_pid}
+		sleep 5s
+		mv ${RESULTS_DIR}/javacore.txt ${RESULTS_DIR}/javacore.afterjarmincomp
 		cp ${JIT_LOG} ${RESULTS_DIR}/jit.log.afterjarmincomp.tmp
 		phase2Start=$(( $phase2LineCount + 1 ))
 		tail -n +${phase2Start} ${RESULTS_DIR}/jit.log.afterjarmincomp.tmp > ${RESULTS_DIR}/jit.log.afterjarmincomp
@@ -216,11 +219,12 @@ echo "top_pid: ${top_pid}"
 # << 'COMMENT'
 if [ "${DO_PERF_PROFILING}" -eq "1" ];
 then
-	#numactl --physcpubind="0-3" --membind="0" /root/ashu/linux/tools/perf/perf record -o ${RESULTS_DIR}/perf.data --call-graph dwarf -k 1 -i -p ${java_pid} -e cycles &
-	tid_hex=`grep -A 3 "executor-thread-1" ${RESULTS_DIR}/javacore.phase2 | grep "native thread ID" | cut -d ':' -f 2 | cut -d ',' -f 1 | cut -d 'x' -f 2`
-	tid=`echo "obase=10; ibase=16; ${tid_hex}" | bc`
-	echo "Profiling thread ${tid}"
-	numactl --physcpubind="0-3" --membind="0" /root/ashu/linux/tools/perf/perf record --tid=${tid} -o ${RESULTS_DIR}/perf.data -k 1 -i -p ${java_pid} -e cycles &
+	#numactl --physcpubind="0-3" --membind="0" /root/ashu/linux/tools/perf/perf record -o ${RESULTS_DIR}/perf.data -k 1 -i -p ${java_pid} -e cycles &
+	taskset -c 0,1,2,3 /home/asmehra/data/IBM/linux/tools/perf/perf record -o ${RESULTS_DIR}/perf.data -k 1 -i -p ${java_pid} -e cycles &
+	#tid_hex=`grep -A 3 "executor-thread-1" ${RESULTS_DIR}/javacore.phase2 | grep "native thread ID" | cut -d ':' -f 2 | cut -d ',' -f 1 | cut -d 'x' -f 2`
+	#tid=`echo "obase=10; ibase=16; ${tid_hex}" | bc`
+	#echo "Profiling thread ${tid}"
+	#numactl --physcpubind="0-3" --membind="0" /root/ashu/linux/tools/perf/perf record --tid=${tid} -o ${RESULTS_DIR}/perf.data -k 1 -i -p ${java_pid} -e cycles &
 	sleep 1s
 	perf_pid=`ps -ef | grep "perf record" | grep -v grep | awk '{ print $2 }'`
 	echo "perf pid: ${perf_pid}"
@@ -279,7 +283,8 @@ sleep 1s
 
 if [ "${DO_PERF_PROFILING}" -eq "1" ];
 then
-	/root/ashu/linux/tools/perf/perf inject -i ${RESULTS_DIR}/perf.data --jit -o ${RESULTS_DIR}/perf.data.jitted
+	/home/asmehra/data/IBM/linux/tools/perf/perf inject -i ${RESULTS_DIR}/perf.data --jit -o ${RESULTS_DIR}/perf.data.jitted
+	/home/asmehra/data/IBM/linux/tools/perf/perf report -i ${RESULTS_DIR}/perf.data.jitted > ${RESULTS_DIR}/perf.jitted.report
 	#mv perf.data ${RESULTS_DIR}
 	#mv perf.data.jitted ${RESULTS_DIR}
 fi
