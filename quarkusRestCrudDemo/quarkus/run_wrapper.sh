@@ -41,6 +41,8 @@ start_db() {
 		echo "Failed to start docker container for postgres db...Exiting"
 		exit -1
 	fi
+	echo "Docker containers:"
+	docker ps -a
 }
 
 stop_db() {
@@ -55,13 +57,33 @@ stop_db() {
 echo "CPU configuration:"
 lscpu
 echo "-----------------"
-checkJre
-checkJreWithJarmin
+echo "Current huge page settings"
+thp_value=`cat /sys/kernel/mm/transparent_hugepage/enabled |  cut -d '[' -f 2 | cut -d ']' -f 1`
+echo "THP setting: ${thp_value}"
+hugepages_total=`cat /proc/sys/vm/nr_hugepages`
+echo "Huge page setting: ${hugepages_total}"
+echo "-----------------"
+
+sudo /bin/echo "never" > /sys/kernel/mm/transparent_hugepage/enabled
+sudo /bin/echo 0 > /proc/sys/vm/nr_hugepages
+
+echo "Huge page settings for this run"
+thp_value=`cat /sys/kernel/mm/transparent_hugepage/enabled |  cut -d '[' -f 2 | cut -d ']' -f 1`
+echo "THP setting: ${thp_value}"
+hugepages_total=`cat /proc/sys/vm/nr_hugepages`
+echo "Huge page setting: ${hugepages_total}"
+echo "-----------------"
+
+if [ "${NATIVE_IMAGE}" -eq "0" ]; then
+	checkJre
+	checkJreWithJarmin
+fi
 checkJmeter
 stop_db # this is to stop any previous db instances
 start_db
 
 sleep 2s
+
 
 if [ $# -gt "0" ];
 then
@@ -91,10 +113,12 @@ export JIT_SETTINGS="-Xjit:${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
 
 ### Jarmin controls ###
 
-#export TR_RegisterForSigUsr=1
-export TR_JarminReductionMode="class"
-#export TR_DoNotRunJarmin=1
-export TR_AllowCompileAfterJarmin=1
+if [ "${NATIVE_IMAGE}" -eq "0" ]; then
+	#export TR_RegisterForSigUsr=1
+	export TR_JarminReductionMode="class"
+	#export TR_DoNotRunJarmin=1
+	export TR_AllowCompileAfterJarmin=1
+fi
 
 echo "Settings for Jarmin:"
 if [ ! -z ${TR_RegisterForSigUsr} ];
@@ -108,4 +132,8 @@ fi
 ./run_jmeter_load.sh "${RESULTS_DIR}"
 
 stop_db
+
+# restore THP and huge page settings
+sudo /bin/echo "${thp_value}" > /sys/kernel/mm/transparent_hugepage/enabled
+sudo /bin/echo "${hugepages_total}" > /proc/sys/vm/nr_hugepages
 
