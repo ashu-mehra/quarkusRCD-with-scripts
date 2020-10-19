@@ -38,12 +38,24 @@ stop_db() {
 	sleep 1s
 }
 
-checkJre
-checkJreWithJarmin
+thp_value=`cat /sys/kernel/mm/transparent_hugepage/enabled |  cut -d '[' -f 2 | cut -d ']' -f 1`
+echo "THP setting: ${thp_value}"
+hugepages_total=`cat /proc/sys/vm/nr_hugepages`
+echo "Huge page setting: ${hugepages_total}"
+echo "-----------------"
+
+sudo /bin/echo "never" > /sys/kernel/mm/transparent_hugepage/enabled
+sudo /bin/echo 0 > /proc/sys/vm/nr_hugepages
+
+# export DO_PERF_PROFILING=1
+export NATIVE_IMAGE=0
+
+if [ "${NATIVE_IMAGE}" -eq "0" ]; then
+	checkJre
+	checkJreWithJarmin
+fi
 #stop_db # this is to stop any previous db instances
 #start_db
-
-sleep 2s
 
 if [ $# -gt "0" ];
 then
@@ -53,12 +65,11 @@ fi
 if [ -z "${RESULTS_DIR}" ]; then RESULTS_DIR="results"; fi
 mkdir -p ${RESULTS_DIR} &> /dev/null
 
-# export DO_PERF_PROFILING=1
 
 ### JVM options ###
 
 #TR_FlushProfilingBuffers=1
-#JIT_OPTION="-Xjit:traceRelocatableDataDetailsRT,traceRelocatableDataRT,log=log,aotrtDebugLevel=30,rtLog=rtLog -Xaot:traceRelocatableDataDetailsRT,traceRelocatableDataRT,aotrtDebugLevel=30"
+#JIT_OPTION="-Xjit:traceRelocatableDataDetailsRT,traceRelocatableDataRT,log=log,aotrtDebugLevel=32,rtLog=rtLog -Xaot:traceRelocatableDataDetailsRT,traceRelocatableDataRT,aotrtDebugLevel=30"
 #export TR_IProfileMore=1
 #export TR_DebugDLT=1
 
@@ -66,7 +77,16 @@ export JIT_LOG="${RESULTS_DIR}/jit.log"
 
 JIT_VERBOSE_SETTING="verbose={compilePerformance,compileExclude,counts,inlining},vlog=${JIT_LOG},iprofilerVerbose,disableSuffixLogs"
 
-JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation"
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining"
+JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold"
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,{org/jboss/resteasy/core/ServerResponseWriter.getDefaultContentType*}(traceInlining,log=ServerResponseWriter.getDefaultContentType.log),{io/netty/buffer/PooledByteBufAllocator\$PoolThreadLocalCache.initialValue*}(traceInlining,log=PoolThreadLocalCache.initialValue.log),{org/hibernate/cfg/PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType*}(traceInlining,log=PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType.log),{org/hibernate/loader/Loader.initializeEntitiesAndCollections*}(traceInlining,log=Loader.initializeEntitiesAndCollections.log)"
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,disableMethodIsCold"
+#JIT_OPTIONS="scratchSpaceLimit=524288,disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,disableMethodIsCold,{org/jboss/resteasy/core/ServerResponseWriter.getDefaultContentType*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=ServerResponseWriter.getDefaultContentType.log),{io/netty/buffer/PooledByteBufAllocator\$PoolThreadLocalCache.initialValue*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=PoolThreadLocalCache.initialValue.log),{org/hibernate/cfg/PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType.log),{org/hibernate/loader/Loader.initializeEntitiesAndCollections*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=Loader.initializeEntitiesAndCollections.log),{org/hibernate/loader/Loader.executeQueryStatement*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=Loader.executeQueryStatement.log)"
+# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
+# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
+# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
+# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
+# fails: JIT_OPTIONS="disableAsyncCompilation,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
 #JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dltOptLevel=hot,scratchSpaceLimit=524288"
 #JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,exclude={*Lambda*.*}"
 
@@ -78,10 +98,12 @@ export JIT_SETTINGS="-Xjit:${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
 
 ### Jarmin controls ###
 
-export TR_RegisterForSigUsr=1
-export TR_JarminReductionMode="class"
-#export TR_DoNotRunJarmin=1
-export TR_AllowCompileAfterJarmin=1
+if [ "${NATIVE_IMAGE}" -eq "0" ]; then
+	export TR_RegisterForSigUsr=1
+	export TR_JarminReductionMode="class"
+	#export TR_DoNotRunJarmin=1
+	export TR_AllowCompileAfterJarmin=1
+fi
 
 echo "Settings for Jarmin:"
 if [ ! -z ${TR_RegisterForSigUsr} ];
@@ -95,4 +117,7 @@ fi
 ./run_jmeter_load.sh "${RESULTS_DIR}"
 
 #stop_db
+# restore THP and huge page settings
+sudo /bin/echo "${thp_value}" > /sys/kernel/mm/transparent_hugepage/enabled
+sudo /bin/echo "${hugepages_total}" > /proc/sys/vm/nr_hugepages
 

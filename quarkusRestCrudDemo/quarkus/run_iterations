@@ -18,11 +18,29 @@ then
 	iterations=$2
 fi
 
+<< 'COMMENT'
 echo "Total iterations: ${iterations}"
-for i in `seq 1 $iterations`;
+for t in 2 5 10 20 30 40 50;
+do
+	echo "Starting iterations for $t threads"
+	echo "----------------------------------"
+	export JMETER_THREADS=$t
+	for i in `seq 1 $iterations`;
+	do
+		echo "---------------------"
+		echo "Starting iteration $i"
+		./run_wrapper.sh test_native_${t}threads.${i}
+		sleep 5s
+	done
+done
+COMMENT
+
+for i in `seq 1 ${iterations}`;
 do
 	echo "---------------------"
 	echo "Starting iteration $i"
+	echo "---------------------"
 	./run_wrapper.sh ${CASE}.${i}
 	sleep 5s
 done
+
