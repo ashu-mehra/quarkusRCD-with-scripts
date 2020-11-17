@@ -36,7 +36,7 @@ checkJmeter() {
 start_db() {
 	DB_CONTAINER_NAME="postgres-quarkus-rest-http-crud"
 
-	docker run --network=host -d --cpuset-cpus=8-11 --cpuset-mems=1 --ulimit memlock=-1:-1 -it --memory-swappiness=0 --name ${DB_CONTAINER_NAME} -e POSTGRES_USER=restcrud -e POSTGRES_PASSWORD=restcrud -e POSTGRES_DB=rest-crud -p 5432:5432 postgres:10.5
+	docker run --network=host -d --cpuset-cpus=4-7 --cpuset-mems=0 --ulimit memlock=-1:-1 -it --memory-swappiness=0 --name ${DB_CONTAINER_NAME} -e POSTGRES_USER=restcrud -e POSTGRES_PASSWORD=restcrud -e POSTGRES_DB=rest-crud -p 5432:5432 postgres:10.5
 	if [ $? -ne "0" ]; then
 		echo "Failed to start docker container for postgres db...Exiting"
 		exit -1

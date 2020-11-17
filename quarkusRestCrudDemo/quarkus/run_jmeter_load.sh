@@ -103,6 +103,7 @@ then
 else
 	if [ "${NATIVE_IMAGE}" -eq "1" ]; then
 		taskset -c 0-3 stdbuf -oL ./target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner -Xmx128m -Xmn110m -Xms100m -Dhttp.host=0.0.0.0 &> ${RESULTS_DIR}/quarkus.log &
+		# numactl --membind="0" --physcpubind="0-3" stdbuf -oL ./target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner -Xmx128m -Xmn110m -Xms100m -Dhttp.host=0.0.0.0 &> ${RESULTS_DIR}/quarkus.log &
 	else
 		# numactl --physcpubind="0-3" --membind="0" stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
 		taskset -c 0-3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
@@ -267,8 +268,8 @@ fi
 
 # Phase 3
 
-# numactl --physcpubind="11-15" --membind="1" ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT} &
-taskset -c 11-15 ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
+taskset -c 14-15 ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
+#numactl --membind="1" --physcpubind="12-15" ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
 sleep 1s
 top_pid=`ps -ef | grep "top -b" | grep -v grep | awk '{ print $2 }'`
 echo "top_pid: ${top_pid}"
@@ -288,8 +289,8 @@ then
 fi
 # COMMENT
 
-# numactl --physcpubind="11-15" --membind="1" ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
-taskset -c 11-15 ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+# numactl --physcpubind="12-15" --membind="1" ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+taskset -c 8-15 ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
 
 if [ ! -z "${TR_RegisterForSigUsr}" ] && [ -z "${TR_DoNotRunJarmin}" ];
 then
@@ -332,6 +333,8 @@ avg_tput=`grep "summary =" ${JMETER_OUTPUT} | tail -n 1 | awk '{ print $7 }' | c
 avg_tput_last2min=`cat ${RESULTS_DIR}/rampup.last2mins | awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}'`
 peak_tput=`cat ${RESULTS_DIR}/rampup | sort -n | tail -n 1`
 peak_tput_last2min=`cat ${RESULTS_DIR}/rampup.last2mins | sort -n | tail -n 1`
+
+touch ${STATS_FILE}
 
 echo "Overall Avg tput: ${avg_tput}" | tee -a ${STATS_FILE}
 echo "Overall Peak tput: ${peak_tput}" | tee -a ${STATS_FILE}
