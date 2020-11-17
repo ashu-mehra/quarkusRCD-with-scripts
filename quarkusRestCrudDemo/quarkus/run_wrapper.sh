@@ -82,7 +82,7 @@ checkJmeter
 stop_db # this is to stop any previous db instances
 start_db
 
-sleep 2s
+sleep 10s
 
 
 if [ $# -gt "0" ];
