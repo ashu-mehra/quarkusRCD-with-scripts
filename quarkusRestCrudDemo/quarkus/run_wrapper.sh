@@ -41,8 +41,11 @@ start_db() {
 		echo "Failed to start docker container for postgres db...Exiting"
 		exit -1
 	fi
+	sleep 10s
 	echo "Docker containers:"
 	docker ps -a
+	echo "DB logs:"
+	docker logs ${DB_CONTAINER_NAME}
 }
 
 stop_db() {
@@ -81,9 +84,6 @@ fi
 checkJmeter
 stop_db # this is to stop any previous db instances
 start_db
-
-sleep 10s
-
 
 if [ $# -gt "0" ];
 then
