@@ -10,7 +10,7 @@ function setDefaultConfig() {
 	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then export JAVA_HOME_FOR_QUARKUS="${PWD}/jre"; fi
 	if [ -z "${JARMIN_PHASE}" ]; then export JARMIN_PHASE="phase2"; fi # valid values: phase1 or phase2
 	if [ -z "${DO_PERF_PROFILING}" ]; then export DO_PERF_PROFILING=0; fi
-	if [ -z "${NUM_REQUESTS}" ]; then export NUM_REQUESTS=10; fi
+	if [ -z "${NUM_REQUESTS}" ]; then export NUM_REQUESTS=1; fi
 	
 	echo "Settings for this run:"
 	echo "JRE_HOME: ${JRE_HOME}"
