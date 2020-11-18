@@ -129,7 +129,17 @@ else
 	echo "TR_RegisterForSigUsr not defined"
 fi
 
-./run_jmeter_load.sh "${RESULTS_DIR}"
+if [ -z ${ITERATIONS} ]; then
+	ITERATIONS=1
+fi
+
+for i in `seq 1 ${ITERATIONS}`;
+do
+	echo "---------------------"
+	echo "Starting iteration $i"
+	./run_jmeter_load.sh "${RESULTS_DIR}/itr${i}"
+	sleep 5s
+done
 
 stop_db
 
