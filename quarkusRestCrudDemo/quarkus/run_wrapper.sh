@@ -117,7 +117,7 @@ if [ "${NATIVE_IMAGE}" -eq "0" ]; then
 	#export TR_RegisterForSigUsr=1
 	export TR_JarminReductionMode="class"
 	#export TR_DoNotRunJarmin=1
-	export TR_AllowCompileAfterJarmin=1
+	#export TR_AllowCompileAfterJarmin=1
 fi
 
 echo "Settings for Jarmin:"
