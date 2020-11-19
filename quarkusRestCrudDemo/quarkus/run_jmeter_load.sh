@@ -87,7 +87,7 @@ else
 	if [ "${NATIVE_IMAGE}" -eq "1" ]; then
 		taskset -c 2,3 stdbuf -oL ./target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner -Xmx128m -Xmn110m -Xms100m -Dhttp.host=0.0.0.0 &> ${RESULTS_DIR}/quarkus.log &
 	else
-		taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -XcompilationThreads1 -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms28m -Xmx28m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
+		taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms28m -Xmx28m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
 	fi
 fi
 
