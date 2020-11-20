@@ -68,6 +68,7 @@ fi
 if [ -z "${RESULTS_DIR}" ]; then RESULTS_DIR="results"; fi
 mkdir -p ${RESULTS_DIR} &> /dev/null
 
+JMETER_WARMUP_OUTPUT="${RESULTS_DIR}/jmeter.warmup.out"
 JMETER_OUTPUT="${RESULTS_DIR}/jmeter.out"
 TOP_OUTPUT_PHASE1="${RESULTS_DIR}/top_phase1.out"
 TOP_OUTPUT_PHASE2="${RESULTS_DIR}/top_phase2.out"
@@ -268,6 +269,12 @@ fi
 
 # Phase 3
 
+# Start warmup run for 3 mins
+echo "Warmup run for 3 mins"
+echo "-----------------------"
+# numactl --physcpubind="12-15" --membind="1" ${JMETER_HOME}/bin/jmeter -JDURATION=180 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_WARMUP_OUTPUT}
+taskset -c 8-15 ${JMETER_HOME}/bin/jmeter -JDURATION=180 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_WARMUP_OUTPUT} 
+
 taskset -c 14-15 ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
 #numactl --membind="1" --physcpubind="12-15" ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
 sleep 1s
@@ -289,8 +296,13 @@ then
 fi
 # COMMENT
 
-# numactl --physcpubind="12-15" --membind="1" ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
-taskset -c 8-15 ${JMETER_HOME}/bin/jmeter -JDURATION=300 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+# Measure run for 2 mins
+echo "Measure run for 2 mins"
+echo "-----------------------"
+# numactl --physcpubind="12-15" --membind="1" ${JMETER_HOME}/bin/jmeter -JDURATION=120 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+taskset -c 8-15 ${JMETER_HOME}/bin/jmeter -JDURATION=120 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+
+kill -9 ${top_pid}
 
 if [ ! -z "${TR_RegisterForSigUsr}" ] && [ -z "${TR_DoNotRunJarmin}" ];
 then
@@ -301,18 +313,16 @@ then
 fi
 
 if [ "${NATIVE_IMAGE}" -eq "0" ]; then
-	kill -3 ${app_pid}
-	sleep 5s
-	mv ${RESULTS_DIR}/javacore.txt ${RESULTS_DIR}/javacore.phase3
 	cp ${JIT_LOG} ${RESULTS_DIR}/jit.log.phase3.tmp
 	phase3Start=$(( $phase2LineCount + 1 ))
 	tail -n +${phase3Start} ${RESULTS_DIR}/jit.log.phase3.tmp > ${RESULTS_DIR}/jit.log.phase3
 	rm -f ${RESULTS_DIR}/jit.log.phase3.tmp
-
+	kill -3 ${app_pid}
+	sleep 5s
+	mv ${RESULTS_DIR}/javacore.txt ${RESULTS_DIR}/javacore.phase3
 	echo "Phase 3 done"
 fi
 
-kill -9 ${top_pid}
 if [ "${NATIVE_IMAGE}" -eq "0" ]; then
 	grep "${app_pid}" ${TOP_OUTPUT_PHASE3} | grep "java" | awk '{ print $6 }' &> ${MEM_OUTPUT_PHASE3}
 	grep "${app_pid}" ${TOP_OUTPUT_PHASE3} | grep "java" | awk '{ print $9 }' &> ${CPU_OUTPUT}
@@ -327,24 +337,26 @@ pmap -X ${app_pid} &> ${PMAP_PHASE3}
 
 # Get all the stats
 
-grep "summary +" ${JMETER_OUTPUT} | grep "00:00:06" | awk '{ print $7 }' | cut -d '/' -f 1 > ${RESULTS_DIR}/rampup
-tail -n 20 ${RESULTS_DIR}/rampup > ${RESULTS_DIR}/rampup.last2mins
+grep "summary +" ${JMETER_OUTPUT} | awk '{ print $7 }' | cut -d '/' -f 1 > ${RESULTS_DIR}/rampup
+#tail -n 20 ${RESULTS_DIR}/rampup > ${RESULTS_DIR}/rampup.last2mins
 avg_tput=`grep "summary =" ${JMETER_OUTPUT} | tail -n 1 | awk '{ print $7 }' | cut -d '/' -f 1`
-avg_tput_last2min=`cat ${RESULTS_DIR}/rampup.last2mins | awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}'`
+#avg_tput_last2min=`cat ${RESULTS_DIR}/rampup.last2mins | awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}'`
 peak_tput=`cat ${RESULTS_DIR}/rampup | sort -n | tail -n 1`
-peak_tput_last2min=`cat ${RESULTS_DIR}/rampup.last2mins | sort -n | tail -n 1`
+#peak_tput_last2min=`cat ${RESULTS_DIR}/rampup.last2mins | sort -n | tail -n 1`
 
 touch ${STATS_FILE}
 
 echo "Overall Avg tput: ${avg_tput}" | tee -a ${STATS_FILE}
 echo "Overall Peak tput: ${peak_tput}" | tee -a ${STATS_FILE}
-echo "Avg tput (last 2 mins): ${avg_tput_last2min}" | tee  -a ${STATS_FILE}
-echo "Peak tput (last 2 mins): ${peak_tput_last2min}" | tee  -a ${STATS_FILE}
+#echo "Avg tput (last 2 mins): ${avg_tput_last2min}" | tee  -a ${STATS_FILE}
+#echo "Peak tput (last 2 mins): ${peak_tput_last2min}" | tee  -a ${STATS_FILE}
 
 echo "Memory after phase1: ${mem_phase1}" | tee -a ${STATS_FILE}
 echo "Memory after phase2: ${mem_phase2}" | tee -a ${STATS_FILE}
 echo "Peak memory: ${max_mem} KB" | tee -a ${STATS_FILE}
 echo "Avg cpu: ${avg_cpu}" | tee -a ${STATS_FILE}
+
+mv ${JIT_LOG} ${RESULTS_DIR}
 
 trap "kill ${perf_pid} ${app_pid}" INT
 #trap "kill ${app_pid}" INT
