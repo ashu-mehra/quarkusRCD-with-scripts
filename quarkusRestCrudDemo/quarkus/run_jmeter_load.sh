@@ -275,12 +275,6 @@ echo "-----------------------"
 # numactl --physcpubind="12-15" --membind="1" ${JMETER_HOME}/bin/jmeter -JDURATION=180 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_WARMUP_OUTPUT}
 taskset -c 8-15 ${JMETER_HOME}/bin/jmeter -JDURATION=180 -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_WARMUP_OUTPUT} 
 
-taskset -c 14-15 ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
-#numactl --membind="1" --physcpubind="12-15" ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
-sleep 1s
-top_pid=`ps -ef | grep "top -b" | grep -v grep | awk '{ print $2 }'`
-echo "top_pid: ${top_pid}"
-
 # << 'COMMENT'
 if [ "${DO_PERF_PROFILING}" -eq "1" ];
 then
@@ -295,6 +289,12 @@ then
 	echo "perf pid: ${perf_pid}"
 fi
 # COMMENT
+
+taskset -c 14-15 ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
+#numactl --membind="1" --physcpubind="12-15" ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
+sleep 1s
+top_pid=`ps -ef | grep "top -b" | grep -v grep | awk '{ print $2 }'`
+echo "top_pid: ${top_pid}"
 
 # Measure run for 2 mins
 echo "Measure run for 2 mins"
@@ -332,7 +332,7 @@ else
 	grep "${app_pid}" ${TOP_OUTPUT_PHASE3} | grep "rest-http" | awk '{ print $9 }' &> ${CPU_OUTPUT}
 fi
 max_mem=`cat ${MEM_OUTPUT_PHASE3} | sort -n | tail -n 1`
-avg_cpu=`awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}' ${CPU_OUTPUT}`
+avg_cpu=`tail -n 120 ${CPU_OUTPUT} | awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}'`
 pmap -X ${app_pid} &> ${PMAP_PHASE3}
 
 # Get all the stats
