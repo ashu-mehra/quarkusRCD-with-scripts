@@ -41,11 +41,30 @@ start_db() {
 		echo "Failed to start docker container for postgres db...Exiting"
 		exit -1
 	fi
-	sleep 10s
 	echo "Docker containers:"
 	docker ps -a
-	echo "DB logs:"
-	docker logs ${DB_CONTAINER_NAME}
+	echo "Waiting for db to startup..."
+	counter=0
+	max_iterations=300
+	db_started=0
+	while [ "${counter}" -lt "${max_iterations}" ];
+	do
+		docker logs ${DB_CONTAINER_NAME} | tail -n 1 | grep "database system is ready to accept connections" &> /dev/null
+		if [ $? -eq "0" ];
+		then
+			db_started=1
+			break;
+		fi
+		sleep 1s
+		counter=$(( $counter+1 ))
+	done
+	if [ "${db_started}" -eq "0" ]; then
+		echo "ERROR: Timeout for db startup expired."
+		echo "DB logs:"
+		docker logs ${DB_CONTAINER_NAME}
+		exit -1
+	fi
+	echo "DB started successfully"
 }
 
 stop_db() {
