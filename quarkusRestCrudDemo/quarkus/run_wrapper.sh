@@ -128,7 +128,8 @@ JIT_VERBOSE_SETTING="verbose={compilePerformance,compileExclude,counts,inlining}
 #export JIT_SETTINGS="-Xjit:exclude={*Lambda*.*},${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
 #export JIT_SETTINGS="-Xjit:exclude={io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*},${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
 #export JIT_SETTINGS="-Xjit:disableAsyncCompilation,disableGuardedCountingRecompilation,{org/jboss/threads/EnhancedQueueExecutor\$ThreadBody.run()V}(count=0),{io/netty/channel/nio/NioEventLoop.run()V}(count=0),${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
-export JIT_SETTINGS="-Xjit:${JIT_VERBOSE_SETTING},${JIT_OPTIONS},exclude={*Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,sun/nio/cs/UTF_8.*,sun/nio/cs/UTF_8\$*.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,DirectHandle.invokeExact_thunkArchetype*.*},{io/vertx/ext/web/impl/RouterImpl.handle(Ljava/lang/Object;)V}(optLevel=warm)"
+#export JIT_SETTINGS="-Xjit:${JIT_VERBOSE_SETTING},${JIT_OPTIONS},exclude={*Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,sun/nio/cs/UTF_8.*,sun/nio/cs/UTF_8\$*.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,DirectHandle.invokeExact_thunkArchetype*.*},{io/vertx/ext/web/impl/RouterImpl.handle(Ljava/lang/Object;)V}(optLevel=warm)"
+export JIT_SETTINGS="-Xjit:${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
 
 ### Jarmin controls ###
 
