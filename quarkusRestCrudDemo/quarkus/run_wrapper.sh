@@ -16,8 +16,11 @@ checkJre() {
 checkJreWithJarmin() {
 	if [ ! -d "${PWD}/jdk-with-jarmin" ]; then
 		echo "JRE with jarmin not found. Downloading it"
-		git clone --depth=1 https://github.com/ashu-mehra/jdk-with-jarmin.git
+		git clone https://github.com/ashu-mehra/jdk-with-jarmin.git
 	fi
+	pushd jdk-with-jarmin
+	git checkout 3f69662f681b5bd2bfbbaea9f5184b49a6c654e3
+	popd
 	echo "JRE with Jarmin version:"
 	./jdk-with-jarmin/j2re-image/bin/java -version
 	echo
