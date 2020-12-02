@@ -152,6 +152,8 @@ else
 	echo "TR_RegisterForSigUsr not defined"
 fi
 
+top -b -d 1 -n 10 > ${RESULTS_DIR}/top_beforestart.out
+
 if [ -z ${ITERATIONS} ]; then
 	ITERATIONS=1
 fi
