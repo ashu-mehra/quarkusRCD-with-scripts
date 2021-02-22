@@ -1,0 +1,11 @@
+org/postgresql/util/ByteConverter
+java/util/Collections$UnmodifiableList$1
+io/netty/buffer/DuplicatedByteBuf
+io/netty/buffer/UnpooledDuplicatedByteBuf
+com/sun/org/apache/xerces/internal/impl/XMLDocumentScannerImpl$ContentDriver
+io/netty/util/concurrent/PromiseCombiner
+io/netty/util/concurrent/PromiseCombiner$1
+java/util/AbstractList$ListItr
+java/util/concurrent/atomic/Striped64$Cell
+java/util/concurrent/ConcurrentLinkedQueue$Itr
+sun/nio/ch/IOVecWrapper

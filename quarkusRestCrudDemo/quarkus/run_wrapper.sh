@@ -77,23 +77,54 @@ export JIT_LOG="${RESULTS_DIR}/jit.log"
 
 JIT_VERBOSE_SETTING="verbose={compilePerformance,compileExclude,counts,inlining},vlog=${JIT_LOG},iprofilerVerbose,disableSuffixLogs"
 
-#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining"
-JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics"
-#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,exclude={*Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,sun/nio/cs/UTF_8.*,sun/nio/cs/UTF_8\$*.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,DirectHandle.invokeExact_thunkArchetype*.*},{io/vertx/ext/web/impl/RouterImpl.handle(Ljava/lang/Object;)V}(optLevel=warm)"
-#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,{org/jboss/resteasy/core/ServerResponseWriter.getDefaultContentType*}(traceInlining,log=ServerResponseWriter.getDefaultContentType.log),{io/netty/buffer/PooledByteBufAllocator\$PoolThreadLocalCache.initialValue*}(traceInlining,log=PoolThreadLocalCache.initialValue.log),{org/hibernate/cfg/PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType*}(traceInlining,log=PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType.log),{org/hibernate/loader/Loader.initializeEntitiesAndCollections*}(traceInlining,log=Loader.initializeEntitiesAndCollections.log)"
-#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,disableMethodIsCold"
-#JIT_OPTIONS="scratchSpaceLimit=524288,disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,disableMethodIsCold,{org/jboss/resteasy/core/ServerResponseWriter.getDefaultContentType*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=ServerResponseWriter.getDefaultContentType.log),{io/netty/buffer/PooledByteBufAllocator\$PoolThreadLocalCache.initialValue*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=PoolThreadLocalCache.initialValue.log),{org/hibernate/cfg/PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=PropertyContainer.collectPersistentAttributesUsingClassLevelAccessType.log),{org/hibernate/loader/Loader.initializeEntitiesAndCollections*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=Loader.initializeEntitiesAndCollections.log),{org/hibernate/loader/Loader.executeQueryStatement*}(traceFull,traceBlockFrequencyGeneration,traceInlining,log=Loader.executeQueryStatement.log)"
-# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
-# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
-# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
-# fails: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
-# fails: JIT_OPTIONS="disableAsyncCompilation,disableConservativeInlining,bigCalleeThreshold=600,inlineVeryLargeCompiledMethods"
-#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dltOptLevel=hot,scratchSpaceLimit=524288"
-#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,exclude={*Lambda*.*}"
+#JIT_OPTIONS="disableAsyncCompilation,{io/netty/handler/codec/http/HttpObjectDecoder.decode(*}(traceFull,traceInlining,log=HttpObjectDecoder.decode.log)"
 
-#export JIT_SETTINGS="-Xjit:exclude={*Lambda*.*},${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
-#export JIT_SETTINGS="-Xjit:exclude={io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*},${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
-#export JIT_SETTINGS="-Xjit:disableAsyncCompilation,disableGuardedCountingRecompilation,{org/jboss/threads/EnhancedQueueExecutor\$ThreadBody.run()V}(count=0),{io/netty/channel/nio/NioEventLoop.run()V}(count=0),${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
+#JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,disableMethodIsCold"
+JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,bigCalleeThreshold=750,bigCalleeHotOptThreshold=750,bigCalleeScorchingOptThreshold=750,scratchSpaceLimit=524288"
+#JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,bigCalleeThreshold=750,bigCalleeHotOptThreshold=750,bigCalleeScorchingOptThreshold=750,{org/hibernate/boot/registry/selector/internal/StrategySelectorBuilder.addDialects(*}(traceFull,traceInlining,log=StrategySelectorBuilder.addDialects.log)"
+#JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,{io/netty/handler/codec/http/HttpObjectDecoder.decode(*}(traceFull,traceInlining,log=HttpObjectDecoder.decode.log)"
+#JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=750,bigCalleeHotOptThreshold=750,bigCalleeScorchingOptThreshold=750,inlineVeryLargeCompiledMethods,disableMethodIsCold"
+#JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=750,bigCalleeHotOptThreshold=750,bigCalleeScorchingOptThreshold=750,inlineVeryLargeCompiledMethods,{io/agroal/pool/ConnectionFactory.recoveryProperties(*}(traceFull,traceInlining,log=ConnectionFactory.recoveryProperties.log)"
+#JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,{io/netty/handler/codec/http/HttpObjectDecoder.decode(*}(traceFull,traceInlining,log=HttpObjectDecoder.decode.log)"
+
+#JIT_OPTIONS="disableAsyncCompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics"
+
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,exclude={*\$Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,java/net/Inet4AddressImpl.lookupAllHostAddr*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*}"
+
+# allow all compilations except those in classnotfound methods, lambda classes and not identified by jarmin
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,exclude={*\$Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,java/net/Inet4AddressImpl.lookupAllHostAddr*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*}"
+
+# disable all phase3 compilations: JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableMethodHandleThunks,disableDynamicLoopTransfer,exclude={*\$Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,java/lang/Thread.yield*,java/net/Inet4AddressImpl.lookupAllHostAddr*,java/net/PlainSocketImpl.socketConnect*,java/net/PlainSocketImpl.socketCreate*,sun/nio/ch/FileDispatcherImpl.writev0*}"
+
+# disable phase 3 compilations except MethodHandleThunks
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableDynamicLoopTransfer,exclude={*\$Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,java/lang/Thread.yield*,java/net/Inet4AddressImpl.lookupAllHostAddr*,java/net/PlainSocketImpl.socketConnect*,java/net/PlainSocketImpl.socketCreate*,sun/nio/ch/FileDispatcherImpl.writev0*}"
+
+# disable phase 3 compilations except classnotfound methods 
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableMethodHandleThunks,disableDynamicLoopTransfer,exclude={*\$Lambda*.*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,java/lang/Thread.yield*,java/net/Inet4AddressImpl.lookupAllHostAddr*,java/net/PlainSocketImpl.socketConnect*,java/net/PlainSocketImpl.socketCreate*,sun/nio/ch/FileDispatcherImpl.writev0*}"
+
+# disable phase 3 compilations except jni methods 
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableMethodHandleThunks,disableDynamicLoopTransfer,exclude={*\$Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*}"
+
+# disable phase 3 compilations except lambda methods
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableMethodHandleThunks,disableDynamicLoopTransfer,exclude={io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,java/lang/Thread.yield*,java/net/Inet4AddressImpl.lookupAllHostAddr*,java/net/PlainSocketImpl.socketConnect*,java/net/PlainSocketImpl.socketCreate*,sun/nio/ch/FileDispatcherImpl.writev0*}"
+
+# disable phase 3 compilations except not identified methods
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableMethodHandleThunks,disableDynamicLoopTransfer,exclude={*\$Lambda*.*,io/netty/util/concurrent/PromiseCombiner.*,io/netty/util/concurrent/PromiseCombiner\$1.*,java/util/AbstractList\$ListItr.*,java/util/concurrent/atomic/Striped64\$Cell.*,java/util/concurrent/ConcurrentLinkedQueue\$Itr.*,sun/nio/ch/IOVecWrapper.*,java/lang/Thread.yield*,java/net/Inet4AddressImpl.lookupAllHostAddr*,java/net/PlainSocketImpl.socketConnect*,java/net/PlainSocketImpl.socketCreate*,sun/nio/ch/FileDispatcherImpl.writev0*}"
+
+# disable phase 3 compilations except MethodHandleThunks and classnotfound methods
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableDynamicLoopTransfer,exclude={*\$Lambda*.*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*,java/lang/Thread.yield*,java/net/Inet4AddressImpl.lookupAllHostAddr*,java/net/PlainSocketImpl.socketConnect*,java/net/PlainSocketImpl.socketCreate*,sun/nio/ch/FileDispatcherImpl.writev0*}"
+
+# disable phase 3 compilations except MethodHandleThunks and classnotfound methods and jni methods
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableDynamicLoopTransfer,exclude={*\$Lambda*.*,java/net/Inet4AddressImpl.lookupAllHostAddr*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*}"
+
+# disable phase 3 compilations except MethodHandleThunks and classnotfound methods and jni methods and lambda methods
+# JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableDynamicLoopTransfer,exclude={java/net/Inet4AddressImpl.lookupAllHostAddr*,sun/nio/cs/UTF_8\$Encoder.implReplaceWith*,sun/nio/cs/UTF_8\$Encoder.isLegalReplacement*,sun/nio/cs/UTF_8\$Encoder.<init>*,sun/nio/cs/UTF_8.*,*GeneratedConstructorAccessor*.*,*GeneratedMethodAccessor*.*}"
+
+# disable phase 3 compilations except MethodHandleThunks and classnotfound methods and jni methods and lambda methods and not identified methods
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableBlockFrequencyBasedInlinerHeuristics,inhibitRecompilation,disableDynamicLoopTransfer"
+
+#JIT_OPTIONS="disableAsyncCompilation,disableGuardedCountingRecompilation,dontDowngradeToCold,disableProfiledInlining,disableConservativeColdInlining,disableConservativeInlining,bigCalleeThreshold=600,bigCalleeHotOptThreshold=600,bigCalleeScorchingOptThreshold=600,inlineVeryLargeCompiledMethods,disableMethodIsCold"
+
 export JIT_SETTINGS="-Xjit:${JIT_VERBOSE_SETTING},${JIT_OPTIONS}"
 
 
@@ -103,8 +134,12 @@ if [ "${NATIVE_IMAGE}" -eq "0" ]; then
 	export TR_RegisterForSigUsr=1
 	export TR_JarminReductionMode="class"
 	#export TR_DoNotRunJarmin=1
-	#export TR_AllowCompileAfterJarmin=1
+	export TR_AllowCompileAfterJarmin=1
+	#export TR_LoadExtraClassesBeforeCompiling=1
 	#export TR_DisableFurtherCompilationUsingFlag=1
+	export TR_WarmInlineAdjustCallGraphMaxCutOff=5000
+	export TR_FlushProfilingBuffers=1
+	export TR_IProfileMore=1
 fi
 
 echo "Settings for Jarmin:"

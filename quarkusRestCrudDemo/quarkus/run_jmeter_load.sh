@@ -7,10 +7,9 @@ function setDefaultConfig() {
 	if [ -z "${QUARKUS_REST_CRUD_APP}" ]; then export QUARKUS_REST_CRUD_APP="${PWD}"; fi
 	if [ -z "${JARMIN_HOME}" ]; then export JARMIN_HOME="${PWD}/jarmin/"; fi
 	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then export JAVA_HOME_FOR_QUARKUS="${PWD}/jdk-with-jarmin/j2re-image"; fi
-	if [ -z "${JAVA_HOME_FOR_QUARKUS}" ]; then export JAVA_HOME_FOR_QUARKUS="${PWD}/jre"; fi
 	if [ -z "${JARMIN_PHASE}" ]; then export JARMIN_PHASE="phase2"; fi # valid values: phase1 or phase2
 	if [ -z "${DO_PERF_PROFILING}" ]; then export DO_PERF_PROFILING=0; fi
-	if [ -z "${NUM_REQUESTS}" ]; then export NUM_REQUESTS=1; fi
+	if [ -z "${NUM_REQUESTS}" ]; then export NUM_REQUESTS=10; fi
 	
 	echo "Settings for this run:"
 	echo "JRE_HOME: ${JRE_HOME}"
@@ -54,6 +53,7 @@ fi
 if [ -z "${RESULTS_DIR}" ]; then RESULTS_DIR="results"; fi
 mkdir -p ${RESULTS_DIR} &> /dev/null
 
+JMETER_WARMUP_OUTPUT="${RESULTS_DIR}/jmeter.warmup.out"
 JMETER_OUTPUT="${RESULTS_DIR}/jmeter.out"
 TOP_OUTPUT_PHASE1="${RESULTS_DIR}/top_phase1.out"
 TOP_OUTPUT_PHASE2="${RESULTS_DIR}/top_phase2.out"
@@ -82,7 +82,7 @@ fi
 
 if [ "${DO_PERF_PROFILING}" -eq "1" ];
 then
-	taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -agentpath:/home/asmehra/data/IBM/linux/tools/perf/libperf-jvmti.so -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms128m -Xmx128m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
+	taskset -c 2,3 stdbuf -oL ${JAVA_HOME_FOR_QUARKUS}/bin/java -agentpath:/home/asmehra/data/IBM/linux/tools/perf/libperf-jvmti.so -Xdump:none -Xdump:java:events=user,file=${JAVACORE} -Xnoaot "${JIT_SETTINGS}" "-Xshareclasses:name=quarkus,cacheDir=${SCC_DIR}" -Xscmx80m -Xms28m -Xmx28m -jar target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner.jar &> ${RESULTS_DIR}/quarkus.log &
 else
 	if [ "${NATIVE_IMAGE}" -eq "1" ]; then
 		taskset -c 2,3 stdbuf -oL ./target/rest-http-crud-quarkus-1.0.0.Alpha1-SNAPSHOT-runner -Xmx128m -Xmn110m -Xms100m -Dhttp.host=0.0.0.0 &> ${RESULTS_DIR}/quarkus.log &
@@ -210,6 +210,9 @@ COMMENT
 
 echo "Using ${NUM_REQUESTS} requests in phase 2"
 
+#taskset -c 0,1,4,5 /home/asmehra/data/apache-jmeter-5.2.1/bin/jmeter -JDURATION=10 -JTHREADS=${JMETER_THREADS} -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_WARMUP_OUTPUT}
+
+#<< 'USING_CURL'
 for i in `seq 1 ${NUM_REQUESTS}`; do
 	response=`curl -s localhost:8080/fruits`
 	if [ $? -ne "0" ];
@@ -226,6 +229,8 @@ for i in `seq 1 ${NUM_REQUESTS}`; do
 		exit
 	fi
 done
+#USING_CURL
+
 
 top -b -n 1 -p "${app_pid}" &> ${TOP_OUTPUT_PHASE2}
 
@@ -255,7 +260,7 @@ if [ "${NATIVE_IMAGE}" -eq "0" ]; then
 		if [ -z "${TR_DoNotRunJarmin}" ];
 		then
 			echo "Starting Jarmin in phase 2"
-			kill -10 ${app_pid}
+			kill -10 ${app_pid} # Send signal USR (10) to trigger jarmin
 			while true;
 			do
 				grep "Compilation Done" ${RESULTS_DIR}/quarkus.log &> /dev/null
@@ -284,10 +289,10 @@ fi
 
 # Phase 3
 
-taskset -c 1 ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
-sleep 1s
-top_pid=`ps -ef | grep "top -b" | grep -v grep | awk '{ print $2 }'`
-echo "top_pid: ${top_pid}"
+# Start warmup run for 3 mins
+#echo "Warmup run for 3 mins"
+#echo "---------------------"
+#taskset -c 0,1,4,5 /home/asmehra/data/apache-jmeter-5.2.1/bin/jmeter -JDURATION=180 -JTHREADS=${JMETER_THREADS} -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_WARMUP_OUTPUT}
 
 # << 'COMMENT'
 if [ "${DO_PERF_PROFILING}" -eq "1" ];
@@ -304,7 +309,17 @@ then
 fi
 # COMMENT
 
+taskset -c 1 ./run_top.sh "${app_pid}" &> ${TOP_OUTPUT_PHASE3} &
+sleep 1s
+top_pid=`ps -ef | grep "top -b" | grep -v grep | awk '{ print $2 }'`
+echo "top_pid: ${top_pid}"
+
+# Measure run for 2 mins
+echo "Measure run for 2 mins"
+echo "---------------------"
 taskset -c 0,1,4,5 /home/asmehra/data/apache-jmeter-5.2.1/bin/jmeter -JDURATION=300 -JTHREADS=${JMETER_THREADS} -Dsummariser.interval=6 -n -t jmeter_restcrud.quarkus.jmx | tee ${JMETER_OUTPUT}
+
+kill -9 ${top_pid}
 
 if [ ! -z "${TR_RegisterForSigUsr}" ] && [ -z "${TR_DoNotRunJarmin}" ];
 then
@@ -315,18 +330,16 @@ then
 fi
 
 if [ "${NATIVE_IMAGE}" -eq "0" ]; then
-	kill -3 ${app_pid}
-	sleep 5s
-	mv ${RESULTS_DIR}/javacore.txt ${RESULTS_DIR}/javacore.phase3
 	cp ${JIT_LOG} ${RESULTS_DIR}/jit.log.phase3.tmp
 	phase3Start=$(( $phase2LineCount + 1 ))
 	tail -n +${phase3Start} ${RESULTS_DIR}/jit.log.phase3.tmp > ${RESULTS_DIR}/jit.log.phase3
 	rm -f ${RESULTS_DIR}/jit.log.phase3.tmp
-
+	kill -3 ${app_pid}
+	sleep 5s
+	mv ${RESULTS_DIR}/javacore.txt ${RESULTS_DIR}/javacore.phase3
 	echo "Phase 3 done"
 fi
 
-kill -9 ${top_pid}
 if [ "${NATIVE_IMAGE}" -eq "0" ]; then
 	grep "${app_pid}" ${TOP_OUTPUT_PHASE3} | grep "java" | awk '{ print $6 }' &> ${MEM_OUTPUT_PHASE3}
 	grep "${app_pid}" ${TOP_OUTPUT_PHASE3} | grep "java" | awk '{ print $9 }' &> ${CPU_OUTPUT}
@@ -334,13 +347,14 @@ else
 	grep "${app_pid}" ${TOP_OUTPUT_PHASE3} | grep "rest-http" | awk '{ print $6 }' &> ${MEM_OUTPUT_PHASE3}
 	grep "${app_pid}" ${TOP_OUTPUT_PHASE3} | grep "rest-http" | awk '{ print $9 }' &> ${CPU_OUTPUT}
 fi
-max_mem=`cat ${MEM_OUTPUT_PHASE3} | sort -n | tail -n 1`
-avg_cpu=`awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}' ${CPU_OUTPUT}`
+
+max_mem=`tail -n 120 ${MEM_OUTPUT_PHASE3} | sort -n | tail -n 1`
+avg_cpu=`tail -n 120 ${CPU_OUTPUT} | awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}'`
 pmap -X ${app_pid} &> ${PMAP_PHASE3}
 
 # Get all the stats
 
-grep "summary +" ${JMETER_OUTPUT} | grep "00:00:06" | awk '{ print $7 }' | cut -d '/' -f 1 > ${RESULTS_DIR}/rampup
+grep "summary +" ${JMETER_OUTPUT} | awk '{ print $7 }' | cut -d '/' -f 1 > ${RESULTS_DIR}/rampup
 tail -n 20 ${RESULTS_DIR}/rampup > ${RESULTS_DIR}/rampup.last2mins
 avg_tput=`grep "summary =" ${JMETER_OUTPUT} | tail -n 1 | awk '{ print $7 }' | cut -d '/' -f 1`
 avg_tput_last2min=`cat ${RESULTS_DIR}/rampup.last2mins | awk 'BEGIN{sum=0}{sum += $1}END{print sum/NR}'`
@@ -354,8 +368,8 @@ echo "Peak tput (last 2 mins): ${peak_tput_last2min}" | tee  -a ${STATS_FILE}
 
 echo "Memory after phase1: ${mem_phase1}" | tee -a ${STATS_FILE}
 echo "Memory after phase2: ${mem_phase2}" | tee -a ${STATS_FILE}
-echo "Peak memory: ${max_mem} KB" | tee -a ${STATS_FILE}
-echo "Avg cpu: ${avg_cpu}" | tee -a ${STATS_FILE}
+echo "Peak memory (last 2 mins): ${max_mem} KB" | tee -a ${STATS_FILE}
+echo "Avg cpu (last 2 mins): ${avg_cpu}" | tee -a ${STATS_FILE}
 
 trap "kill ${perf_pid} ${app_pid}" INT
 #trap "kill ${app_pid}" INT
